@@ -13,7 +13,7 @@ import grp
 import os
 import subprocess
 
-from pysh.builtins import builtin_exit, builtin_pwd
+from pysh.builtins import builtin_exit, builtin_pwd, builtin_cd, builtin_echo, builtin_help, builtin_procinfo
 from pysh.colors import BLUE, GREEN, RESET
 
 
@@ -49,18 +49,36 @@ def execute(command, args):
     """
 
     # TODO: Add your own built-in commands here
+  
+    
     if command == "pwd":
         builtin_pwd(args)
+
+    elif command == "touch":
+        builtin_touch(args)
+    
+    elif command == "help":
+        builtin_help(args)
+
+    elif command == "echo":
+        builtin_echo(args)
+
+    elif command == "cd":
+        builtin_cd(args)
+    
+    elif command == "procinfo":
+        builtin_procinfo(args)
+
     elif command == "exit":
         builtin_exit(args)
+
     else:
-        # Run external commands as a child process.
-        # subprocess.run will search for the command on the system PATH,
-        # run it, and wait for it to finish before returning.
         try:
             subprocess.run([command] + args)
         except FileNotFoundError:
             print(f"pysh: {command}: command not found")
+    
+    
 
 
 def main():
