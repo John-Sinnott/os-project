@@ -123,3 +123,24 @@ def builtin_procinfo(args):
     except psutil.NoSuchProcess:
         print(f"procInfo: process {args[0]} Not Found")
 
+
+#-------------------------------------------------------------------------------
+
+# Part 2
+
+def builtin_cat(args):
+    
+    if len(args) == 0:
+        print("cat: missing file arguments")
+        return
+
+    for file in args:
+        try: 
+            with open(file, "r") as f:
+                print(f.read(), end="")
+
+        except FileNotFoundError:
+            print(f"cat: {file}: No such file")
+        
+        except PermissionError:
+            print(f"cat: {file}: Permission denied")

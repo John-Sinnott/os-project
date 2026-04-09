@@ -13,7 +13,7 @@ import grp
 import os
 import subprocess
 
-from pysh.builtins import builtin_exit, builtin_pwd, builtin_cd, builtin_echo, builtin_help, builtin_procinfo
+from pysh.builtins import builtin_exit, builtin_pwd, builtin_cd, builtin_echo, builtin_help, builtin_procinfo, builtin_cat
 from pysh.colors import BLUE, GREEN, RESET
 
 
@@ -71,6 +71,9 @@ def execute(command, args):
 
     elif command == "exit":
         builtin_exit(args)
+        
+    elif command == "cat":
+        builtin_cat(args)
 
     else:
         try:
