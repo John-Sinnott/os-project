@@ -144,3 +144,39 @@ def builtin_cat(args):
         
         except PermissionError:
             print(f"cat: {file}: Permission denied")
+
+def builtin_head(args):
+    
+    if len(args) == 0:
+        print("head: missing file arguments")
+        return
+
+    n = 10 # default num
+    file = None
+
+    # Check's if user used -n
+    if args[0] == "-n":
+        if len(args) < 3:
+            print(f"head: use: head -n N {file}")
+            return
+        try:
+            n = int(args[1])
+            except ValueError:
+                print("head: invalid number")
+                return
+
+            file = args[2]
+        else:
+            file = args[0]
+
+        try:
+            with open(file, "r") as f:
+                lines = f.readlines()
+                for line in lines[:n]:
+                    print(line, end="")
+
+        except FileNotFoundError:
+            print(f"head: {file}: File not Found")
+        
+        except PermissionError:
+            print(f"head: {file}: Permission denied")
