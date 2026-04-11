@@ -147,12 +147,14 @@ def builtin_cat(args):
 
 def builtin_head(args):
     
+    # Checks for user arguments.
     if len(args) == 0:
         print("head: missing file arguments")
         return
 
-    n = 10 # default num
-    file = None
+    # Default Values
+    n = 10         # if num of lines isnt specified, default is 10.
+    file = None    # Placeholder until file is specified.
 
     # Check's if user used -n
     if args[0] == "-n":
@@ -161,22 +163,22 @@ def builtin_head(args):
             return
         try:
             n = int(args[1])
-            except ValueError:
-                print("head: invalid number")
-                return
+        except ValueError:
+            print("head: invalid number")
+            return
 
-            file = args[2]
-        else:
-            file = args[0]
+        file = args[2]
+    else:
+        file = args[0]
 
-        try:
-            with open(file, "r") as f:
-                lines = f.readlines()
-                for line in lines[:n]:
-                    print(line, end="")
+    try:
+        with open(file, "r") as f:
+            lines = f.readlines()
+            for line in lines[:n]:
+                print(line, end="")
 
-        except FileNotFoundError:
-            print(f"head: {file}: File not Found")
+    except FileNotFoundError:
+        print(f"head: {file}: File not Found")
         
-        except PermissionError:
-            print(f"head: {file}: Permission denied")
+    except PermissionError:
+        print(f"head: {file}: Permission denied")
