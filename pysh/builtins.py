@@ -161,24 +161,49 @@ def builtin_head(args):
         if len(args) < 3:
             print(f"head: use: head -n N {file}")
             return
+        # convert num of lines inputted into integer
         try:
             n = int(args[1])
         except ValueError:
             print("head: invalid number")
             return
 
-        file = args[2]
+        file = args[2] # Gets third arg, filename
     else:
         file = args[0]
 
     try:
-        with open(file, "r") as f:
+        with open(file, "r") as f:   # Opens file in read only
             lines = f.readlines()
             for line in lines[:n]:
-                print(line, end="")
+                print(line, end="")  # reads all lines
 
     except FileNotFoundError:
         print(f"head: {file}: File not Found")
         
     except PermissionError:
         print(f"head: {file}: Permission denied")
+
+
+def builtin_wc(args):
+
+    if len(args) == 0:
+        print("wc: missing file operand")
+        return
+
+    for file in args:
+        try: 
+            with open(file, "r") as f:
+
+                text = f.read()
+                lines = text.splitlines()
+                line_count = len(lines)
+                word_count = len(text.split())
+                char_count = len(text)
+                print(f"{line_count} {word_count} {char_count} {file}")
+
+        except FileNotFoundError:
+            print(f"wc: {file}: No such file")
+        
+        except PermissionError:
+            print(f"wc: {file}: Permission denied")
