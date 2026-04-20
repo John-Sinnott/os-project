@@ -207,3 +207,23 @@ def builtin_wc(args):
         
         except PermissionError:
             print(f"wc: {file}: Permission denied")
+
+#-------------------------------------------------------------------------------
+
+# Part 3 
+
+def builtin_sysinfo(args):
+    # Gets memory information
+    mem = psutil.virtual_memory()
+    swap = psutil.swap_memory()
+
+    print(" -- MEMORY --")
+    print(f"Total: {mem.total}")
+    print(f"Used: {mem.used}")
+    print(f"Available: {mem.available}")
+    print(f"Usage: {mem.percent}")
+
+    print("\n -- SWAP --")
+    print(f"Total: {swap.total}")
+    print(f"Used: {swap.used}")
+    print(f"Free: {swap.free}")
