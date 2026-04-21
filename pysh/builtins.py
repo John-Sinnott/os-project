@@ -227,3 +227,41 @@ def builtin_sysinfo(args):
     print(f"Total: {swap.total}")
     print(f"Used: {swap.used}")
     print(f"Free: {swap.free}")
+
+    print("\n -- CPU --")
+    # CPU Usage Total
+    cpu_total = psutil.cpu_percent()
+    print(f"Total CPU Usage: {cpu_total}%")
+
+    # CPU Usage per core
+    cpu_cores = psutil.cpu_percent(percpu=True)
+    for i, core in enumerate(cpu_cores):
+        print(f"Core {i}: {core}%")
+
+
+    processes = []
+
+    for proc in psutil.process_iter(["pid","name","cpu_percent","memory_percent"]):
+        try :
+            processes.append(proc.info)
+        except:
+            pass
+
+    sort_by = "memory" # Default
+
+    if len(args) >= 2 and args[0] == "--sort":
+        sort_by = args[1]
+
+    if sort_by == "cpu":
+        processes.sort(key=lambda p: p['cpu_percent'], reverse=True)
+    else:
+        processes.sort(key=lambda p: p['memory_percent'], reverse=True)
+
+    top = processes[:10]
+
+    print("\n-- TOP 10 PROCESSES --")
+
+    for p in top:
+        print(f"{p['pid']} {p['name']} CPU: {p['cpu_percent']}% MEM: {p['memory_percent']:.2f}%")
+
+    
