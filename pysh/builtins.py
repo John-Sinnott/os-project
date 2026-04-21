@@ -12,6 +12,7 @@ Look at builtin_pwd below as a complete example to follow.
 import os
 import sys
 import psutil
+import time
 
 # ---------------------------------------------------------------------------
 # Example built-in: pwd
@@ -211,57 +212,75 @@ def builtin_wc(args):
 #-------------------------------------------------------------------------------
 
 # Part 3 
+def bytes_to_gb(b):
+    return b / (1024 ** 3) # converts bytes to gigabytes
 
 def builtin_sysinfo(args):
-    # Gets memory information
-    mem = psutil.virtual_memory()
-    swap = psutil.swap_memory()
+    while True:
+        psutil.cpu_percent(interval=None)
+        os.system("clear")
+        
+        # -- Gets memory information --
+        mem = psutil.virtual_memory()
+        swap = psutil.swap_memory()
 
-    print(" -- MEMORY --")
-    print(f"Total: {mem.total}")
-    print(f"Used: {mem.used}")
-    print(f"Available: {mem.available}")
-    print(f"Usage: {mem.percent}")
+        print(" -- MEMORY --")
+        print(f"Total: {bytes_to_gb(mem.total):.2f} GB")
+        print(f"Used: {bytes_to_gb(mem.used):.2f} GB")
+        print(f"Available: {bytes_to_gb(mem.available):.2f} GB")
+        print(f"Usage: {mem.percent} %")
 
-    print("\n -- SWAP --")
-    print(f"Total: {swap.total}")
-    print(f"Used: {swap.used}")
-    print(f"Free: {swap.free}")
+        print("\n -- SWAP --")
+        print(f"Total: {bytes_to_gb(swap.total):.2f} GB")
+        print(f"Used: {bytes_to_gb(swap.used):.2f} GB")
+        print(f"Free: {bytes_to_gb(swap.free):.2f} GB")
 
-    print("\n -- CPU --")
-    # CPU Usage Total
-    cpu_total = psutil.cpu_percent()
-    print(f"Total CPU Usage: {cpu_total}%")
-
-    # CPU Usage per core
-    cpu_cores = psutil.cpu_percent(percpu=True)
-    for i, core in enumerate(cpu_cores):
-        print(f"Core {i}: {core}%")
+        print("\n -- CPU --")
+        # CPU Usage Total
+        cpu_total = psutil.cpu_percent(interval=None)
+        print(f"Total CPU Usage: {cpu_total}%")
 
 
-    processes = []
+        # CPU Usage per core
+        cpu_cores = psutil.cpu_percent(interval=None, percpu=True)
+        for i, core in enumerate(cpu_cores):
+            print(f"Core {i}: {core}%")
 
-    for proc in psutil.process_iter(["pid","name","cpu_percent","memory_percent"]):
-        try :
-            processes.append(proc.info)
-        except:
-            pass
+        # -- Processes --
+        processes = []
 
-    sort_by = "memory" # Default
 
-    if len(args) >= 2 and args[0] == "--sort":
-        sort_by = args[1]
+        for proc in psutil.process_iter(["pid","name","cpu_percent","memory_percent"]):
+            try :
+                cpu = proc.cpu_percent(interval=None)
+                info = proc.info
+                info['cpu_percent'] = cpu
+                processes.append(info)
+            except:
+                pass
 
-    if sort_by == "cpu":
-        processes.sort(key=lambda p: p['cpu_percent'], reverse=True)
-    else:
-        processes.sort(key=lambda p: p['memory_percent'], reverse=True)
+        sort_by = "memory" # Default
 
-    top = processes[:10]
+        if len(args) >= 2 and args[0] == "--sort":
+            sort_by = args[1]
 
-    print("\n-- TOP 10 PROCESSES --")
+        if sort_by == "cpu":
+            processes.sort(key=lambda p: p['cpu_percent'], reverse=True)
+        else:
+            processes.sort(key=lambda p: p['memory_percent'], reverse=True)
 
-    for p in top:
-        print(f"{p['pid']} {p['name']} CPU: {p['cpu_percent']}% MEM: {p['memory_percent']:.2f}%")
+        top = processes[:10]
+
+        print("\n-- TOP 10 PROCESSES --")
+        print(f"{'PID':<6} {'NAME':<20} {'CPU%':<6} {'MEM%':<6}")
+
+        for p in top:
+            name = (p['name'] or "")[:20]
+            print(f"{p['pid']:<6} {name:<20} {p['cpu_percent']:<6.1f} {p['memory_percent']:<6.2f}")
+
+        # Wait before refreshing
+        time.sleep(2)
+
+
 
     
