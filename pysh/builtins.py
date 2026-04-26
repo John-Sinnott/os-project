@@ -13,6 +13,15 @@ import os
 import sys
 import psutil
 import time
+import queue
+import threading
+import requests
+
+download_queue = queue.Queue()
+completed_count = 0
+
+lock = threading.Lock()
+workers = []
 
 # ---------------------------------------------------------------------------
 # Example built-in: pwd
@@ -153,31 +162,31 @@ def builtin_head(args):
         print("head: missing file arguments")
         return
 
-    # Default Values
+    # Default Values.
     n = 10         # if num of lines isnt specified, default is 10.
     file = None    # Placeholder until file is specified.
 
-    # Check's if user used -n
+    # Check's if user used -n.
     if args[0] == "-n":
         if len(args) < 3:
             print(f"head: use: head -n N {file}")
             return
-        # convert num of lines inputted into integer
+        # convert num of lines inputted into integer.
         try:
             n = int(args[1])
         except ValueError:
             print("head: invalid number")
             return
 
-        file = args[2] # Gets third arg, filename
+        file = args[2] # Gets third arg, filename.
     else:
         file = args[0]
 
     try:
-        with open(file, "r") as f:   # Opens file in read only
+        with open(file, "r") as f:   # Opens file in read only.
             lines = f.readlines()
             for line in lines[:n]:
-                print(line, end="")  # reads all lines
+                print(line, end="")  # reads all lines.
 
     except FileNotFoundError:
         print(f"head: {file}: File not Found")
@@ -213,7 +222,7 @@ def builtin_wc(args):
 
 # Part 3 
 def bytes_to_gb(b):
-    return b / (1024 ** 3) # converts bytes to gigabytes
+    return b / (1024 ** 3) # converts bytes to gigabytes.
 
 def builtin_sysinfo(args):
     while True:
@@ -236,12 +245,12 @@ def builtin_sysinfo(args):
         print(f"Free: {bytes_to_gb(swap.free):.2f} GB")
 
         print("\n -- CPU --")
-        # CPU Usage Total
+        # CPU Usage Total.
         cpu_total = psutil.cpu_percent(interval=None)
         print(f"Total CPU Usage: {cpu_total}%")
 
 
-        # CPU Usage per core
+        # CPU Usage per core.
         cpu_cores = psutil.cpu_percent(interval=None, percpu=True)
         for i, core in enumerate(cpu_cores):
             print(f"Core {i}: {core}%")
@@ -259,7 +268,7 @@ def builtin_sysinfo(args):
             except:
                 pass
 
-        sort_by = "memory" # Default
+        sort_by = "memory" # Default.
 
         if len(args) >= 2 and args[0] == "--sort":
             sort_by = args[1]
@@ -278,9 +287,122 @@ def builtin_sysinfo(args):
             name = (p['name'] or "")[:20]
             print(f"{p['pid']:<6} {name:<20} {p['cpu_percent']:<6.1f} {p['memory_percent']:<6.2f}")
 
-        # Wait before refreshing
+        # Wait before refreshing.
         time.sleep(2)
 
+#-------------------------------------------------------------------------------
+# Part 4 
 
+# Queue Files
+
+# Reads file line by line. Adds each URL to the sahred queue.
+
+def load_urls(file):
+    try:
+        # Opens file in read only mode.
+        with open(file, "r") as f:
+            for line in f:
+                # Removes the whitespace.
+                url = line.strip()
+
+                # Only add non-empty lines.
+                if url:
+                    # Put URL into shared queue.
+                    download_queue.put(url)
+    except FileNotFoundError:
+        print(f"download: {file}: No such file")
+
+# Download Command.
+# Handles the downloading of URLs, status checking, and setting the amount of workers to the download.
+def builtin_download(args):
+    global workers
+
+    if len(args) == 0:
+        print("download: missing file")
+        return
+
+    # Status Command - Shows progress of current download.
+    if args[0] == "--status":
+        # Gets number of items in queue.
+        queued = download_queue.qsize()
+
+        print(f"Queued: {download_queue.qsize()}")
+        print(f"Current workers: {len(workers)}")
+        print(f"Completed: {completed_count}")
+
+        # If the queue is empty then print download complete message.
+        if queued == 0:
+            print("All downloads complete.")
+        return
+
+    # Prevents starting multiple sets of workers at the same time.
+    if workers:
+        print("Workers already running")
+        return
+
+    # First arg is the file containing the URLs.
+    file = args[0]
+
+    num_workers = 3 # Default value.
+
+    # Check if user specified custome worker amount.
+    if "-w" in args:
+        try:
+            # Get the vlaue that comes after "-w"
+            num_workers = int(args[args.index("-w") + 1])
+        except:
+            print("download: invalid worker count")
+            return
+    
+    # Loads URLs into the queue
+    load_urls(file)
+
+    # Creates the worker thread. Each worker runs in the background and precesses the queue
+    for _ in range(num_workers):
+        t = threading.Thread(target = worker, daemon = True)
+        t.start()
+        workers.append(t)
+
+    print (f"Loaded URLs: Starting {num_workers} workers..")
+
+
+
+# Worker Command. Takes URL from Queue. Downloads URL. Saves it to file. Updates completed counter safely with lock.
+def worker():
+    global completed_count
+    # Runs infinitly waiting for new tasks.
+    while True:
+        # Get next URL in queue
+        url = download_queue.get()
+        #print(f"Downloading: {url}")
+
+        try: 
+            # sends a Http request to download the file
+            response = requests.get(url, timeout=5)
+
+            # Makes downloads folder if it doesnt already exist
+            os.makedirs("downloads", exist_ok=True)
+
+            # Gets the file name from URL.
+            # If URL ends with "/", deafult to index.html
+            filename = url.split("/")[-1] or "index.html"
+
+            # Creates the full file path
+            filepath = os.path.join("downloads", filename)
+
+            # Writes the file in binary mode. for files with non-text content
+            with open(filepath, "wb") as f:
+                f.write(response.content)
+
+            # Thread safe counter increment
+            # Prevents multiple threads updating at the same time. Lock used to prevent race conditions.
+            with lock:
+                completed_count += 1
+
+        except Exception:
+            print(f"download error: {url}")
+        
+        finally:
+            download_queue.task_done()
 
     
