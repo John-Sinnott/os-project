@@ -47,9 +47,35 @@ def execute(command, args):
     First checks if the command is a built-in. If not, tries to run it
     as an external program using subprocess.
     """
+    # Part 4 Background Processes
+    background = False
+    
+    # Checks if args exists and if the last arg is "&"
+    if args and args[-1] == "&":
+        background = True
+        args = args[:-1] # Removes the & from args, because its not part of the command
+
+    # I/O Redirection (>, >>)
+    redirect = None
+    filename = None
+
+    # Check for append operator
+    if ">>" in args:
+        
+        idx = args.index(">>")    # Finds position of ">>"
+        redirect = "a"            # "a" = append mode
+        filename = args[idx +1]   # Gets filename
+        args = args[:idx]         # Removes ">>" and filename from args
+
+    # Checks for overwrite operator
+    elif ">" in args: 
+        
+        idx = args.index(">")     # Finds position of ">"
+        redirect = "w"            # "w" write mode to overwrite file
+        filename = args[idx + 1]  # gets filename after ">"
+        args = args[:idx]         # Removes ">" and filename so its just the command
 
     # TODO: Add your own built-in commands here
-  
     
     if command == "pwd":
         builtin_pwd(args)
@@ -89,7 +115,33 @@ def execute(command, args):
 
     else:
         try:
-            subprocess.run([command] + args)
+            # Checks if user used ">" or ">>", then redirect output to a file
+            if redirect:
+
+                # Opens file in either "w" or "a"
+                # w = overwrite
+                # a = append
+                with open(filename, redirect) as f:
+                    if background:
+                        # Popen runs process without blocking the shell
+                        # stdout=f means that the output goes to the file instead of the terminal
+                        proc = subprocess.Popen([command] + args, stdout=f)
+
+                        # Print process ID so user is aware its running 
+                        print(f"[{proc.pid}] Running in Background")
+                    else:
+
+                        # run() puts a block up untill command finishes
+                        # stdout=f redirects output into the file
+                        subprocess.run([command] + args, stdout=f)
+                        
+            else:
+                if background:
+                    proc = subprocess.Popen([command] + args)
+                    print(f"{proc.pid} Running in Background")
+                else:
+                    subprocess.run([command] + args)
+
         except FileNotFoundError:
             print(f"pysh: {command}: command not found")
     

@@ -225,8 +225,9 @@ def bytes_to_gb(b):
     return b / (1024 ** 3) # converts bytes to gigabytes.
 
 def builtin_sysinfo(args):
-
+    # Runs forever untill py-shell is closed
     while True:
+        #clears terminal
         os.system("clear")
         
         # -- Gets memory information --
@@ -234,65 +235,83 @@ def builtin_sysinfo(args):
         swap = psutil.swap_memory()
 
         print(" -- MEMORY --")
-        print(f"Total: {bytes_to_gb(mem.total):.2f} GB")
-        print(f"Used: {bytes_to_gb(mem.used):.2f} GB")
-        print(f"Available: {bytes_to_gb(mem.available):.2f} GB")
-        print(f"Usage: {mem.percent}%")
+        print(f"Total: {bytes_to_gb(mem.total):.2f} GB")         # total RAM
+        print(f"Used: {bytes_to_gb(mem.used):.2f} GB")           # RAM in use
+        print(f"Available: {bytes_to_gb(mem.available):.2f} GB") # usable Memory
+        print(f"Usage: {mem.percent}%") # % of RAM used
 
         print("\n -- SWAP --")
-        print(f"Total: {bytes_to_gb(swap.total):.2f} GB")
-        print(f"Used: {bytes_to_gb(swap.used):.2f} GB")
-        print(f"Free: {bytes_to_gb(swap.free):.2f} GB")
+        print(f"Total: {bytes_to_gb(swap.total):.2f} GB")        # total swap space
+        print(f"Used: {bytes_to_gb(swap.used):.2f} GB")          # used swap
+        print(f"Free: {bytes_to_gb(swap.free):.2f} GB")          # remaining swap
 
         print("\n -- CPU --")
+
         # CPU Usage Total.
+        # Using interval=None for defining "since last call"
         cpu_total = psutil.cpu_percent(interval=None)
         print(f"Total CPU Usage: {cpu_total}%")
 
-
         # CPU Usage per core.
+        # percpu=True returns list (single value per core)
         cpu_cores = psutil.cpu_percent(interval=0, percpu=True)
+
+        # Loops through each core and prints usage in %
         for i, core in enumerate(cpu_cores):
             print(f"Core {i:<2}: {core:>5.1f}%")
 
         # -- Processes --
-
+        # Initialise CPU tracking for each process
+        # psutils requires this so it can return the real CPU values
         for proc in psutil.process_iter():
             try:
                 proc.cpu_percent(interval=None)
             except:
                 pass
 
+        # Wait so CPU usage can be measured accuratly
         time.sleep(1)
 
         processes = []
 
-        for proc in psutil.process_iter(["pid","name","memory_percent"]):
+        for proc in psutil.process_iter(["pid","name","cpu_percent","memory_percent"]):
             try :
+                # Get real CPU use in percent
                 cpu = proc.cpu_percent(interval=None)
+
+                # PRoc.info returns the requested fields e.g. pid, name, CPU percent, memory_percent
                 info = proc.info
-                info['cpu_percent'] = cpu
+                
+                # Add process to list
                 processes.append(info)
             except:
+                # May have processes that dissapear so we pass
                 pass
 
         sort_by = "memory" # Default.
 
+        # Checks if user used "--sort" flag
         if len(args) >= 2 and args[0] == "--sort":
             if args[1] in ["cpu", "memory"]:
                 sort_by = args[1]
 
+        # Sorts based on chosen flag e.g. "cpu" or "memory"
         if sort_by == "cpu":
+            # sorts by cpu usage - Highest First
             processes.sort(key=lambda p: p['cpu_percent'], reverse=True)
         else:
+            # Sorts by memory usage - Highest First
             processes.sort(key=lambda p: p['memory_percent'], reverse=True)
 
+        # Only takes the top 10 processes
         top = processes[:10]
 
         print("\n-- TOP 10 PROCESSES --")
+        # Header Format
         print(f"{'PID':<6} {'NAME':<20} {'CPU%':<6} {'MEM%':<6}")
 
         for p in top:
+            # Puts a limit on the name length
             name = (p['name'] or "")[:20]
             print(f"{p['pid']:<6} {name:<20} {p['cpu_percent']:<6.1f} {p['memory_percent']:<6.2f}")
             
