@@ -225,8 +225,8 @@ def bytes_to_gb(b):
     return b / (1024 ** 3) # converts bytes to gigabytes.
 
 def builtin_sysinfo(args):
+
     while True:
-        psutil.cpu_percent(interval=None)
         os.system("clear")
         
         # -- Gets memory information --
@@ -237,7 +237,7 @@ def builtin_sysinfo(args):
         print(f"Total: {bytes_to_gb(mem.total):.2f} GB")
         print(f"Used: {bytes_to_gb(mem.used):.2f} GB")
         print(f"Available: {bytes_to_gb(mem.available):.2f} GB")
-        print(f"Usage: {mem.percent} %")
+        print(f"Usage: {mem.percent}%")
 
         print("\n -- SWAP --")
         print(f"Total: {bytes_to_gb(swap.total):.2f} GB")
@@ -251,15 +251,23 @@ def builtin_sysinfo(args):
 
 
         # CPU Usage per core.
-        cpu_cores = psutil.cpu_percent(interval=None, percpu=True)
+        cpu_cores = psutil.cpu_percent(interval=0, percpu=True)
         for i, core in enumerate(cpu_cores):
-            print(f"Core {i}: {core}%")
+            print(f"Core {i:<2}: {core:>5.1f}%")
 
         # -- Processes --
+
+        for proc in psutil.process_iter():
+            try:
+                proc.cpu_percent(interval=None)
+            except:
+                pass
+
+        time.sleep(1)
+
         processes = []
 
-
-        for proc in psutil.process_iter(["pid","name","cpu_percent","memory_percent"]):
+        for proc in psutil.process_iter(["pid","name","memory_percent"]):
             try :
                 cpu = proc.cpu_percent(interval=None)
                 info = proc.info
@@ -271,7 +279,8 @@ def builtin_sysinfo(args):
         sort_by = "memory" # Default.
 
         if len(args) >= 2 and args[0] == "--sort":
-            sort_by = args[1]
+            if args[1] in ["cpu", "memory"]:
+                sort_by = args[1]
 
         if sort_by == "cpu":
             processes.sort(key=lambda p: p['cpu_percent'], reverse=True)
@@ -286,6 +295,7 @@ def builtin_sysinfo(args):
         for p in top:
             name = (p['name'] or "")[:20]
             print(f"{p['pid']:<6} {name:<20} {p['cpu_percent']:<6.1f} {p['memory_percent']:<6.2f}")
+            
 
         # Wait before refreshing.
         time.sleep(2)
