@@ -83,6 +83,8 @@ def builtin_cd(args):
         os.chdir(path)
     except FileNotFoundError:
         print(f"cd: directory not found {path}")
+    except NotADirectoryError:
+        print(f"cd: not a directory: {path}")
     except PermissionError:
         print(f"cd: permission restricted {path}")
 
@@ -210,7 +212,7 @@ def builtin_wc(args):
                 line_count = len(lines)
                 word_count = len(text.split())
                 char_count = len(text)
-                print(f"{line_count} {word_count} {char_count} {file}")
+                print(f"L: {line_count} W: {word_count} C: {char_count} {file}")
 
         except FileNotFoundError:
             print(f"wc: {file}: No such file")

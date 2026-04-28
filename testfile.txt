@@ -8,4 +8,5 @@ pysh
 pysh.egg-info
 test.txt
 test_urls.txt
+testfile.txt
 uv.lock
