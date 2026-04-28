@@ -47,13 +47,17 @@ def execute(command, args):
     First checks if the command is a built-in. If not, tries to run it
     as an external program using subprocess.
     """
+
     # Part 4 Background Processes
     background = False
     
     # Checks if args exists and if the last arg is "&"
+    # Then if command ends in & it runs in background.
+    # Background processes do not Wait and are non-blocking
     if args and args[-1] == "&":
         background = True
         args = args[:-1] # Removes the & from args, because its not part of the command
+                         # Its just a shell instruction.
 
     # I/O Redirection (>, >>)
     redirect = None

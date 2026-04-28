@@ -6,6 +6,7 @@ file.txt
 pyproject.toml
 pysh
 pysh.egg-info
-test.txt
 test_urls.txt
+testfile.txt
+teststst.txt
 uv.lock

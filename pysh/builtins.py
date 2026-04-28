@@ -188,7 +188,7 @@ def builtin_head(args):
         with open(file, "r") as f:   # Opens file in read only.
             lines = f.readlines()
             for line in lines[:n]:
-                print(line, end="")  # reads all lines.
+                print(line, end="")  # reads and prints all lines.
 
     except FileNotFoundError:
         print(f"head: {file}: File not Found")
@@ -281,7 +281,7 @@ def builtin_sysinfo(args):
                 # Get real CPU use in percent
                 cpu = proc.cpu_percent(interval=None)
 
-                # PRoc.info returns the requested fields e.g. pid, name, CPU percent, memory_percent
+                # Proc.info returns the requested fields e.g. pid, name, CPU percent, memory_percent
                 info = proc.info
                 
                 # Add process to list
@@ -326,7 +326,7 @@ def builtin_sysinfo(args):
 
 # Queue Files
 
-# Reads file line by line. Adds each URL to the sahred queue.
+# Reads file line by line. Adds each URL to the shared queue.
 
 def load_urls(file):
     try:
@@ -367,16 +367,16 @@ def builtin_download(args):
         return
 
     # Prevents starting multiple sets of workers at the same time.
-    if workers:
+    if workers and download_queue.qsize() > 0:
         print("Workers already running")
         return
 
-    # First arg is the file containing the URLs.
+    # First arg is the fildowne containing the URLs.
     file = args[0]
 
     num_workers = 3 # Default value.
 
-    # Check if user specified custome worker amount.
+    # Check if user specified custom worker amount.
     if "-w" in args:
         try:
             # Get the vlaue that comes after "-w"
@@ -421,7 +421,7 @@ def worker():
             # Creates the full file path
             filepath = os.path.join("downloads", filename)
 
-            # Writes the file in binary mode. for files with non-text content
+            # Writes the downloaded contnet to file, in binary.
             with open(filepath, "wb") as f:
                 f.write(response.content)
 

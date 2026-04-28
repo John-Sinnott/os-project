@@ -1,11 +1,11 @@
 README.md
 brief.md
 brief.pdf
-downloads
 file.txt
 pyproject.toml
 pysh
 pysh.egg-info
 test.txt
 test_urls.txt
+testfile.txt
 uv.lock
